@@ -65,6 +65,9 @@ const firebaseConfig = {
   apiKey: "AIzaSyDQ_c0k7ISbheCf2ineoBLvvRaaSOzEJSw",
   authDomain: "testkarte-jan26.firebaseapp.com",
   projectId: "testkarte-jan26",
+  storageBucket: "testkarte-jan26.firebasestorage.app",
+  messagingSenderId: "481455551535",
+  appId: "1:481455551535:web:385cb5bdd8c82af03902da"
 };
 
 firebase.initializeApp(firebaseConfig);
