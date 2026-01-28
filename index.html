@@ -66,7 +66,7 @@ placeholder="Beschreibung eingeben..."></textarea>
 
 <br>
 
-<button id="saveBtn" disabled>Speichern</button>
+<button id="saveBtn" disabled>Eintrag speichern</button>
 
 <p id="hint">
 Klicke zuerst auf die Karte.
@@ -103,7 +103,7 @@ const db = firebase.firestore();
 const centerLat = 50.908;
 const centerLng = 6.187;
 
-const maxDistance = 30000; // 30km
+const maxDistance = 10000; // 10km
 
 let tempMarker = null;
 let selectedLatLng = null;
@@ -114,6 +114,48 @@ const map = L.map('map').setView([centerLat, centerLng], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+// ================== VISUAL RADIUS MASK ==================
+
+const radiusCircle = L.circle([centerLat, centerLng], {
+  radius: maxDistance,
+  color: "black",
+  weight: 2,
+  fillOpacity: 0
+}).addTo(map);
+
+
+// World mask with hole
+const outerBounds = [
+  [-90, -180],
+  [-90, 180],
+  [90, 180],
+  [90, -180]
+];
+
+const innerCircle = [];
+
+const points = 120;
+
+for (let i = 0; i < points; i++) {
+
+  const angle = (i / points) * Math.PI * 2;
+
+  const lat = centerLat + (maxDistance / 111320) * Math.cos(angle);
+  const lng = centerLng + (maxDistance / (111320 * Math.cos(centerLat * Math.PI / 180))) * Math.sin(angle);
+
+  innerCircle.push([lat, lng]);
+}
+
+// Create mask
+L.polygon([outerBounds, innerCircle], {
+
+  color: null,
+  fillColor: "black",
+  fillOpacity: 0.35,
+  stroke: false
+
+}).addTo(map);
+  
 // ================== DISTANCE ==================
 
 function distanceInMeters(lat1, lon1, lat2, lon2) {
