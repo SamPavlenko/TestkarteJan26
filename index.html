@@ -7,6 +7,10 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
+body {
+  margin: 0;
+}
+  
 #map { height: 100vh; }
 
 #formBox {
@@ -16,11 +20,20 @@
   z-index: 1000;
   background: white;
   padding: 10px;
-  border-radius: 8px;
+  border-radius: 12px;
   box-shadow: 0 0 8px rgba(0,0,0,0.2);
   font-size: 14px;
+  width: 250px;
 }
 
+
+#saveBtn {
+  margin-top: 8px;
+  width: 100%;
+  padding: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
 
 </style>
 </head>
@@ -28,6 +41,9 @@
 <body>
 
 <div id="formBox">
+
+<b>Meldung eintragen</b>
+<br><br>
 
   Kategorie:
   <select id="category">
@@ -40,21 +56,25 @@
 
   <br><br>
 
-  Beschreibung:
-  <br>
-  <textarea id="comment" rows="3" cols="30"
-    placeholder="Beschreibung eingeben..."></textarea>
+Beschreibung:
+<br>
+<textarea id="comment" rows="3" style="width:100%"
+placeholder="Beschreibung eingeben..."></textarea>
 
-  <p>Klicke danach auf die Karte um den Punkt zu setzen.</p>
+<br>
+
+  <button id="saveBtn" disabled>Speichern</button>
+
+<p id="hint">
+Klicke zuerst auf die Karte.
+</p>
 
 </div>
-
 
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
@@ -74,56 +94,156 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 
+// ================== PARAMETER ==================
+
+const centerLat = 50.908;
+const centerLng = 6.187;
+
+const maxDistance = 30000; // 30km
+
+let tempMarker = null;
+let selectedLatLng = null;
+
+  // ================== MAP ==================
+
 // Karte initialisieren
 const map = L.map('map').setView([50.908, 6.187], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
+// ================== DISTANCE ==================
 
-// Marker speichern bei Klick
-map.on('click', function(e) {
+function distanceInMeters(lat1, lon1, lat2, lon2) {
 
-  const lat = e.latlng.lat;
-  const lng = e.latlng.lng;
+  const R = 6371000;
 
-  const category = document.getElementById("category").value;
-  const comment = document.getElementById("comment").value;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
 
-  db.collection("marker").add({
-    lat: lat,
-    lng: lng,
-    category: category,
-    comment: comment,
-    timestamp: new Date()
-  });
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
+  // ================== COLORS ==================
+
+function getColor(category) {
+
+  if (category === "Hitze") return "orange";
+  if (category === "Starkregen") return "blue";
+  if (category === "Hochwasser") return "brown";
+  if (category === "Versiegelung") return "gray";
+  if (category === "Weiteres") return "green";
+
+  return "black";
+}
+
+
+// ================== DRAW MARKER ==================
+
+function drawMarker(lat, lng, category, comment) {
 
   const popupText =
     "<b>Kategorie:</b> " + category +
     "<br><b>Info:</b> " + comment;
 
-  L.marker([lat, lng])
-    .addTo(map)
-    .bindPopup(popupText);
+  const color = getColor(category);
+
+  L.circleMarker([lat, lng], {
+    radius: 8,
+    fillColor: color,
+    color: "#000",
+    weight: 1,
+    fillOpacity: 0.8
+  })
+  .addTo(map)
+  .bindPopup(popupText);
+}
+  
+// ================== MAP CLICK ==================
+
+map.on('click', function(e) {
+
+  const lat = e.latlng.lat;
+  const lng = e.latlng.lng;
+
+  const dist = distanceInMeters(centerLat, centerLng, lat, lng);
+
+  if (dist > maxDistance) {
+    alert("Marker nur im Umkreis von 30 km um Baesweiler erlaubt.");
+    return;
+  }
+
+  selectedLatLng = e.latlng;
+
+  if (tempMarker) {
+    map.removeLayer(tempMarker);
+  }
+
+  tempMarker = L.marker([lat, lng]).addTo(map);
+
+  document.getElementById("saveBtn").disabled = false;
+  document.getElementById("hint").innerText = "Jetzt Kategorie auswählen und speichern.";
 
 });
 
+// ================== SAVE BUTTON ==================
 
+document.getElementById("saveBtn").addEventListener("click", function() {
 
-// Marker laden
+  if (!selectedLatLng) return;
+
+  const category = document.getElementById("category").value;
+  const comment = document.getElementById("comment").value;
+
+  const lat = selectedLatLng.lat;
+  const lng = selectedLatLng.lng;
+
+  db.collection("marker").add({
+
+    lat: lat,
+    lng: lng,
+    category: category,
+    comment: comment,
+    timestamp: new Date()
+
+  });
+
+  if (tempMarker) {
+    map.removeLayer(tempMarker);
+  }
+
+  drawMarker(lat, lng, category, comment);
+
+  selectedLatLng = null;
+  tempMarker = null;
+
+  document.getElementById("comment").value = "";
+  document.getElementById("saveBtn").disabled = true;
+  document.getElementById("hint").innerText = "Klicke auf die Karte für neuen Punkt.";
+
+});
+
+// ================== LOAD EXISTING ==================
+
 db.collection("marker").get().then(snapshot => {
 
   snapshot.forEach(doc => {
 
     const data = doc.data();
 
-    const popupText =
-  "<b>Kategorie:</b> " + data.category +
-  "<br><b>Info:</b> " + data.comment;
-
-L.marker([data.lat, data.lng])
-  .addTo(map)
-  .bindPopup(popupText);
-
+    drawMarker(
+      data.lat,
+      data.lng,
+      data.category,
+      data.comment
+    );
 
   });
 
