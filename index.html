@@ -2,30 +2,32 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Bürgerbeteiligung: Interaktive Karte</title>
+<title>Bürgerbeteiligung Baesweiler</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 
 <style>
+
 body {
   margin: 0;
 }
-  
-#map { height: 100vh; }
+
+#map {
+  height: 100vh;
+}
 
 #formBox {
   position: absolute;
   top: 10px;
-  left: 100px;
+  left: 10px;
   z-index: 1000;
   background: white;
-  padding: 10px;
-  border-radius: 12px;
+  padding: 12px;
+  border-radius: 8px;
   box-shadow: 0 0 8px rgba(0,0,0,0.2);
   font-size: 14px;
   width: 250px;
 }
-
 
 #saveBtn {
   margin-top: 8px;
@@ -45,16 +47,17 @@ body {
 <b>Meldung eintragen</b>
 <br><br>
 
-  Kategorie:
-  <select id="category">
-    <option value="Hitze">Hitze</option>
-    <option value="Starkregen">Starkregen</option>
-    <option value="Hochwasser">Hochwasser</option>
-    <option value="Versiegelung">Versiegelung</option>
-    <option value="Weiteres">Weiteres</option>
-  </select>
+Kategorie:
+<br>
+<select id="category" style="width:100%">
+  <option value="Hitze">Hitze</option>
+  <option value="Starkregen">Starkregen</option>
+  <option value="Hochwasser">Hochwasser</option>
+  <option value="Versiegelung">Versiegelung</option>
+  <option value="Weiteres">Weiteres</option>
+</select>
 
-  <br><br>
+<br><br>
 
 Beschreibung:
 <br>
@@ -63,7 +66,7 @@ placeholder="Beschreibung eingeben..."></textarea>
 
 <br>
 
-  <button id="saveBtn" disabled>Speichern</button>
+<button id="saveBtn" disabled>Speichern</button>
 
 <p id="hint">
 Klicke zuerst auf die Karte.
@@ -80,7 +83,8 @@ Klicke zuerst auf die Karte.
 
 <script>
 
-// 🔹 Firebase Config hier einfügen
+// ================== FIREBASE ==================
+  
 const firebaseConfig = {
   apiKey: "AIzaSyDQ_c0k7ISbheCf2ineoBLvvRaaSOzEJSw",
   authDomain: "testkarte-jan26.firebaseapp.com",
@@ -104,10 +108,9 @@ const maxDistance = 30000; // 30km
 let tempMarker = null;
 let selectedLatLng = null;
 
-  // ================== MAP ==================
+// ================== MAP ==================
 
-// Karte initialisieren
-const map = L.map('map').setView([50.908, 6.187], 14);
+const map = L.map('map').setView([centerLat, centerLng], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
@@ -131,7 +134,7 @@ function distanceInMeters(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-  // ================== COLORS ==================
+// ================== COLORS ==================
 
 function getColor(category) {
 
@@ -143,7 +146,6 @@ function getColor(category) {
 
   return "black";
 }
-
 
 // ================== DRAW MARKER ==================
 
@@ -165,7 +167,7 @@ function drawMarker(lat, lng, category, comment) {
   .addTo(map)
   .bindPopup(popupText);
 }
-  
+
 // ================== MAP CLICK ==================
 
 map.on('click', function(e) {
