@@ -33,6 +33,11 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v5
+      - name: Set API key
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+        run: |
+          echo "API Key securely passed"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
