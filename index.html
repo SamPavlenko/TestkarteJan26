@@ -85,9 +85,10 @@ Klicke zuerst auf die Karte.
 <script>
 
 // ================== FIREBASE ==================
-  
+const apiKey = process.env.API_KEY;
+
 const firebaseConfig = {
-  apiKey: "AIzaSyDQ_c0k7ISbheCf2ineoBLvvRaaSOzEJSw",
+  apiKey: apiKey,
   authDomain: "testkarte-jan26.firebaseapp.com",
   projectId: "testkarte-jan26",
   storageBucket: "testkarte-jan26.firebasestorage.app",
