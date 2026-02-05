@@ -41,8 +41,7 @@ jobs:
       - name: Inject API Key
         run: |
           sed -i 's/{{ API_KEY_PLACEHOLDER }}/${{ secrets.API_KEY }}/g' index.html
+          cat index.html
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-        run: |
-          cat index.html
