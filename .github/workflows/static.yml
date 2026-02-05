@@ -31,6 +31,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Inject API Key
+        run: |
+          sed -i 's/{{ API_KEY_PLACEHOLDER }}/${{ secrets.API_KEY }}/g' index.html
+          echo "<!-- dummy comment -->" >> index.html
+          cat index.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
@@ -38,11 +43,6 @@ jobs:
         with:
           # Upload entire repository
           path: '.'
-      - name: Inject API Key
-        run: |
-          sed -i 's/{{ API_KEY_PLACEHOLDER }}/${{ secrets.API_KEY }}/g' index.html
-          echo "<!-- dummy comment -->" >> index.html
-          cat index.html
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
