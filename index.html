@@ -55,6 +55,7 @@ Kategorie:
   <option value="Starkregen">Starkregen</option>
   <option value="Hochwasser">Hochwasser</option>
   <option value="Versiegelung">Versiegelung</option>
+  <option value="Starkwind">Starkwind</option>
   <option value="Weiteres">Weiteres</option>
 </select>
 
@@ -105,7 +106,7 @@ const db = firebase.firestore();
 const centerLat = 50.908;
 const centerLng = 6.187;
 
-const maxDistance = 7000; // 7km
+const maxDistance = 2000; // 2km
 
 let tempMarker = null;
 let selectedLatLng = null;
@@ -190,6 +191,7 @@ function getColor(category) {
   if (category === "Hochwasser") return "brown";
   if (category === "Versiegelung") return "gray";
   if (category === "Weiteres") return "green";
+  if (category === "Starkwind") return "yellow";
 
   return "black";
 }
@@ -225,7 +227,7 @@ map.on('click', function(e) {
   const dist = distanceInMeters(centerLat, centerLng, lat, lng);
 
   if (dist > maxDistance) {
-    alert("Marker nur im Umkreis von 7 km um Baesweiler erlaubt.");
+    alert("Marker nur im Umkreis von 2 km um Baesweiler erlaubt.");
     return;
   }
 
@@ -259,8 +261,7 @@ document.getElementById("saveBtn").addEventListener("click", function() {
   lng: lng,
   category: category,
   comment: comment,
-  timestamp: new Date(),
-  approved: false
+  timestamp: new Date()
 
   });
 
