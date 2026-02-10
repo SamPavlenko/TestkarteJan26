@@ -284,27 +284,21 @@ document.getElementById("saveBtn").onclick = function() {
 
 // ================== LOAD EXISTING ==================
 
-db.collection("marker")
-  .where("approved", "==", true)
-  .onSnapshot(snapshot => {
+db.collection("marker").get().then(snapshot => {
 
-    markerLayer.clearLayers();
+  snapshot.forEach(doc => {
 
-    snapshot.forEach(doc => {
-      const d = doc.data();
+    const data = doc.data();
 
-      const popup =
-        "<b>Kategorie:</b> " + d.category +
-        "<br><b>Info:</b> " + d.comment;
+    drawMarker(
+      data.lat,
+      data.lng,
+      data.category,
+      data.comment
+    );
 
-      L.circleMarker([d.lat, d.lng], {
-        radius: 7,
-        color: colors[d.category] || "black",
-        fillOpacity: 0.9
-      })
-      .bindPopup(popup)
-      .addTo(markerLayer);
-    });
+  });
+
 });
 
 </script>
