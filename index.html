@@ -111,6 +111,7 @@ let tempMarker = null;
 let selectedLatLng = null;
 
 // ================== MAP ==================
+const markerLayer = L.layerGroup().addTo(map);
 
 const map = L.map('map').setView([centerLat, centerLng], 14);
 
@@ -208,8 +209,8 @@ function drawMarker(lat, lng, category, comment) {
     weight: 1,
     fillOpacity: 0.8
   })
-  .addTo(map)
-  .bindPopup(popupText);
+  .bindPopup(popupText)
+  .addTo(markerLayer);
 }
 
 // ================== MAP CLICK ==================
@@ -280,17 +281,18 @@ document.getElementById("saveBtn").addEventListener("click", function() {
 
 db.collection("marker")
   .where("approved", "==", true)
-   .onSnapshot(snapshot => {
+  .onSnapshot(snapshot => {
 
-  snapshot.forEach(doc => {
+    markerLayer.clearLayers(); // 🔴 DAS IST ENTSCHEIDEND
 
-    const data = doc.data();
+    snapshot.forEach(doc => {
+      const data = doc.data();
 
-    drawMarker(
-      data.lat,
-      data.lng,
-      data.category,
-      data.comment
+      drawMarker(
+        data.lat,
+        data.lng,
+        data.category,
+        data.comment
     );
 
   });
