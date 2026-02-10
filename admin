@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Moderation</title>
+</head>
+
+<body>
+
+<h2>Neue Meldungen</h2>
+
+<ul id="list"></ul>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+
+const API_KEY = "{{ API_KEY_PLACEHOLDER }}";
+  
+const firebaseConfig = {
+  apiKey: API_KEY,
+  authDomain: "testkarte-jan26.firebaseapp.com",
+  projectId: "testkarte-jan26"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const list = document.getElementById("list");
+
+db.collection("marker")
+  .where("approved", "==", false)
+  .get()
+  .then(snapshot => {
+
+    snapshot.forEach(doc => {
+
+      const d = doc.data();
+      const li = document.createElement("li");
+
+      li.innerHTML = `
+        <b>${d.category}</b><br>
+        ${d.comment}<br>
+        <button onclick="approve('${doc.id}')">Freigeben</button>
+      `;
+
+      list.appendChild(li);
+    });
+  });
+
+function approve(id) {
+
+  db.collection("marker").doc(id).update({
+    approved: true
+  });
+
+  alert("Freigegeben – Marker ist jetzt öffentlich.");
+  location.reload();
+}
+
+</script>
+
+</body>
+</html>
