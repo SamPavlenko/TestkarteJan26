@@ -56,6 +56,11 @@ function approve(id) {
     approved: true
   });
 
+  db.collection("marker").doc(id).set({
+  approved: true
+}, { merge: true });
+
+
   alert("Freigegeben – Marker ist jetzt öffentlich.");
   location.reload();
 }
