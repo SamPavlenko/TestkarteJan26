@@ -278,7 +278,10 @@ document.getElementById("saveBtn").addEventListener("click", function() {
 
 // ================== LOAD EXISTING ==================
 
-db.collection("marker").get().then(snapshot => {
+db.collection("marker")
+  .where("approved", "==", true)
+  .get()
+  .then(snapshot => {
 
   snapshot.forEach(doc => {
 
