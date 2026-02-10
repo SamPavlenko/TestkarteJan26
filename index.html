@@ -280,8 +280,7 @@ document.getElementById("saveBtn").addEventListener("click", function() {
 
 db.collection("marker")
   .where("approved", "==", true)
-  .get()
-  .then(snapshot => {
+   .onSnapshot(snapshot => {
 
   snapshot.forEach(doc => {
 
