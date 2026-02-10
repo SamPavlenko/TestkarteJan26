@@ -252,12 +252,12 @@ document.getElementById("saveBtn").addEventListener("click", function() {
   const lng = selectedLatLng.lng;
 
   db.collection("marker").add({
-
-    lat: lat,
-    lng: lng,
-    category: category,
-    comment: comment,
-    timestamp: new Date()
+  lat: lat,
+  lng: lng,
+  category: category,
+  comment: comment,
+  timestamp: new Date(),
+  approved: false
 
   });
 
