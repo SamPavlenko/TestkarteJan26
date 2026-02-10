@@ -111,9 +111,11 @@ let tempMarker = null;
 let selectedLatLng = null;
 
 // ================== MAP ==================
-const markerLayer = L.layerGroup().addTo(map);
 
 const map = L.map('map').setView([centerLat, centerLng], 14);
+
+  
+  const markerLayer = L.layerGroup().addTo(map);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
