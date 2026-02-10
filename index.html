@@ -71,7 +71,7 @@ placeholder="Text eingeben..."></textarea>
 <button id="saveBtn" disabled>Eintrag speichern</button>
 
 <p id="hint">
-Klicke zuerst auf die Karte.
+Klicke zuerst auf die Karte - dann speichern.
 </p>
 
 </div>
@@ -115,10 +115,9 @@ let selectedLatLng = null;
 
 const map = L.map('map').setView([centerLat, centerLng], 14);
 
-  
-  const markerLayer = L.layerGroup().addTo(map);
-
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+const markerLayer = L.layerGroup().addTo(map);
 
 // ================== VISUAL RADIUS MASK ==================
 
