@@ -245,15 +245,17 @@ map.on('click', function(e) {
 
 // ================== SAVE BUTTON ==================
 
-document.getElementById("saveBtn").addEventListener("click", function() {
+document.getElementById("saveBtn").onclick = function() {
 
   if (!selectedLatLng) return;
 
   const category = document.getElementById("category").value;
   const comment = document.getElementById("comment").value;
 
-  const lat = selectedLatLng.lat;
-  const lng = selectedLatLng.lng;
+  if (!selectedLatLng || comment.trim() === "") {
+    alert("Bitte Marker setzen und Text eingeben.");
+    return;
+  }
 
   db.collection("marker").add({
   lat: lat,
@@ -286,20 +288,23 @@ db.collection("marker")
   .where("approved", "==", true)
   .onSnapshot(snapshot => {
 
-    markerLayer.clearLayers(); // 🔴 DAS IST ENTSCHEIDEND
+    markerLayer.clearLayers();
 
     snapshot.forEach(doc => {
-      const data = doc.data();
+      const d = doc.data();
 
-      drawMarker(
-        data.lat,
-        data.lng,
-        data.category,
-        data.comment
-    );
+      const popup =
+        "<b>Kategorie:</b> " + d.category +
+        "<br><b>Info:</b> " + d.comment;
 
-  });
-
+      L.circleMarker([d.lat, d.lng], {
+        radius: 7,
+        color: colors[d.category] || "black",
+        fillOpacity: 0.9
+      })
+      .bindPopup(popup)
+      .addTo(markerLayer);
+    });
 });
 
 </script>
