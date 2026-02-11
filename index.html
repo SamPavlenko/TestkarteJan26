@@ -218,30 +218,44 @@ function drawMarker(lat, lng, category, comment) {
 
 // ================== MAP CLICK ==================
 
-map.on('click', function(e) {
+document.getElementById("saveBtn").onclick = function() {
 
-  const lat = e.latlng.lat;
-  const lng = e.latlng.lng;
+  if (!selectedLatLng) return;
 
-  const dist = distanceInMeters(centerLat, centerLng, lat, lng);
+  const lat = selectedLatLng.lat;
+  const lng = selectedLatLng.lng;
 
-  if (dist > maxDistance) {
-    alert("Marker nur im Umkreis von 5 km um Baesweiler erlaubt.");
+  const category = document.getElementById("category").value;
+  const comment = document.getElementById("comment").value;
+
+  if (comment.trim() === "") {
+    alert("Bitte Text eingeben.");
     return;
   }
 
-  selectedLatLng = e.latlng;
+  db.collection("marker").add({
+    lat: lat,
+    lng: lng,
+    category: category,
+    comment: comment,
+    timestamp: new Date(),
+    approved: false
+  });
 
   if (tempMarker) {
     map.removeLayer(tempMarker);
   }
 
-  tempMarker = L.marker([lat, lng]).addTo(map);
+  drawMarker(lat, lng, category, comment);
 
-  document.getElementById("saveBtn").disabled = false;
-  document.getElementById("hint").innerText = "Jetzt Kategorie auswählen und speichern.";
+  selectedLatLng = null;
+  tempMarker = null;
 
-});
+  document.getElementById("comment").value = "";
+  document.getElementById("saveBtn").disabled = true;
+  document.getElementById("hint").innerText = "Klicke auf die Karte für neuen Punkt.";
+};
+
 
 // ================== SAVE BUTTON ==================
 
