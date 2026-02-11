@@ -259,6 +259,21 @@ document.getElementById("saveBtn").onclick = function() {
 
 
 // ================== SAVE BUTTON ==================
+map.on('click', function(e) {
+
+  const lat = e.latlng.lat;
+  const lng = e.latlng.lng;
+
+  selectedLatLng = e.latlng;
+
+  if (tempMarker) {
+    map.removeLayer(tempMarker);
+  }
+
+  tempMarker = L.marker([lat, lng]).addTo(map);
+
+  document.getElementById("saveBtn").disabled = false;
+});
 
 
 // ================== LOAD EXISTING ==================
