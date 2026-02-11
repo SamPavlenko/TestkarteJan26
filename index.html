@@ -287,26 +287,7 @@ map.on('click', function(e) {
 
 // ================== LOAD EXISTING ==================
 
-db.collection("marker")
-  .where("approved", "==", true)
-  .get()
-  .then(snapshot => {
-
-    snapshot.forEach(doc => {
-
-      const data = doc.data();
-
-      drawMarker(
-        data.lat,
-        data.lng,
-        data.category,
-        data.comment
-      );
-
-    });
-
-});
-
+db.collection("marker").get().then(snapshot => { snapshot.forEach(doc => { const data = doc.data(); drawMarker( data.lat, data.lng, data.category, data.comment ); }); });
 
 </script>
 
