@@ -264,6 +264,13 @@ map.on('click', function(e) {
   const lat = e.latlng.lat;
   const lng = e.latlng.lng;
 
+  const dist = distanceInMeters(centerLat, centerLng, lat, lng);
+
+  if (dist > maxDistance) {
+    alert("Marker nur im Umkreis von 5 km um Baesweiler erlaubt.");
+    return;
+  }
+
   selectedLatLng = e.latlng;
 
   if (tempMarker) {
@@ -273,6 +280,8 @@ map.on('click', function(e) {
   tempMarker = L.marker([lat, lng]).addTo(map);
 
   document.getElementById("saveBtn").disabled = false;
+  document.getElementById("hint").innerText =
+    "Jetzt Kategorie auswählen und speichern.";
 });
 
 
