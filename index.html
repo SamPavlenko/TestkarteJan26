@@ -259,42 +259,6 @@ document.getElementById("saveBtn").onclick = function() {
 
 // ================== SAVE BUTTON ==================
 
-document.getElementById("saveBtn").onclick = function() {
-
-  if (!selectedLatLng) return;
-
-  const category = document.getElementById("category").value;
-  const comment = document.getElementById("comment").value;
-
-  if (!selectedLatLng || comment.trim() === "") {
-    alert("Bitte Marker setzen und Text eingeben.");
-    return;
-  }
-
-  db.collection("marker").add({
-  lat: lat,
-  lng: lng,
-  category: category,
-  comment: comment,
-  timestamp: new Date(),
-  approved: false
-
-  });
-
-  if (tempMarker) {
-    map.removeLayer(tempMarker);
-  }
-
-  drawMarker(lat, lng, category, comment);
-
-  selectedLatLng = null;
-  tempMarker = null;
-
-  document.getElementById("comment").value = "";
-  document.getElementById("saveBtn").disabled = true;
-  document.getElementById("hint").innerText = "Klicke auf die Karte für neuen Punkt.";
-
-});
 
 // ================== LOAD EXISTING ==================
 
