@@ -79,6 +79,7 @@ Klicke zuerst auf die Karte - dann speichern.
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -103,84 +104,123 @@ const db = firebase.firestore();
 
 // ================== PARAMETER ==================
 
-const centerLat = 50.908;
-const centerLng = 6.187;
+// const centerLat = 50.908;
+// const centerLng = 6.187;
 
-const maxDistance = 5000; // 5km
+// const maxDistance = 5000; // 5km
 
-let tempMarker = null;
-let selectedLatLng = null;
+// let tempMarker = null;
+// let selectedLatLng = null;
 
 // ================== MAP ==================
 
-const map = L.map('map').setView([centerLat, centerLng], 14);
+const map = L.map('map').setView([50.908, 6.187], 14);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 const markerLayer = L.layerGroup().addTo(map);
 
+let tempMarker = null;
+let selectedLatLng = null;
+let cityBoundary = null;
+
+
+// ================== LOAD CITY BOUNDARY ==================
+
+fetch("baesweiler.geojson")
+  .then(res => res.json())
+  .then(data => {
+
+    cityBoundary = L.geoJSON(data, {
+      style: {
+        color: "black",
+        weight: 2,
+        fillOpacity: 0
+      }
+    }).addTo(map);
+
+    map.fitBounds(cityBoundary.getBounds());
+
+    createMask(data);
+  });
+
+  
 // ================== VISUAL RADIUS MASK ==================
 
-const radiusCircle = L.circle([centerLat, centerLng], {
-  radius: maxDistance,
-  color: "black",
-  weight: 2,
-  fillOpacity: 0
-}).addTo(map);
+// const radiusCircle = L.circle([centerLat, centerLng], {
+//  radius: maxDistance,
+//  color: "black",
+//  weight: 2,
+//  fillOpacity: 0
+// }).addTo(map);
 
 
 // World mask with hole
-const outerBounds = [
-  [-90, -180],
-  [-90, 180],
-  [90, 180],
-  [90, -180]
-];
 
-const innerCircle = [];
+function createMask(geojsonData) {
 
-const points = 120;
+  const outerBounds = [
+    [-90, -180],
+    [-90, 180],
+    [90, 180],
+    [90, -180]
+  ];
 
-for (let i = 0; i < points; i++) {
+  const cityCoords = geojsonData.features[0].geometry.coordinates;
 
-  const angle = (i / points) * Math.PI * 2;
-
-  const lat = centerLat + (maxDistance / 111320) * Math.cos(angle);
-  const lng = centerLng + (maxDistance / (111320 * Math.cos(centerLat * Math.PI / 180))) * Math.sin(angle);
-
-  innerCircle.push([lat, lng]);
+  L.polygon([outerBounds, cityCoords[0]], {
+    fillColor: "black",
+    fillOpacity: 0.35,
+    stroke: false,
+    interactive: false
+  }).addTo(map);
 }
+  
+
+// const innerCircle = [];
+
+// const points = 120;
+
+// for (let i = 0; i < points; i++) {
+
+//  const angle = (i / points) * Math.PI * 2;
+
+//  const lat = centerLat + (maxDistance / 111320) * Math.cos(angle);
+//  const lng = centerLng + (maxDistance / (111320 * Math.cos(centerLat * Math.PI / 180))) * Math.sin(angle);
+
+//  innerCircle.push([lat, lng]);
+// }
 
 // Create mask
-L.polygon([outerBounds, innerCircle], {
+// L.polygon([outerBounds, innerCircle], {
 
-  color: null,
-  fillColor: "black",
-  fillOpacity: 0.35,
-  stroke: false,
-  interaktive: false
+//  color: null,
+//  fillColor: "black",
+//  fillOpacity: 0.35,
+//  stroke: false,
+//  interaktive: false
 
-}).addTo(map);
+// }).addTo(map);
   
 // ================== DISTANCE ==================
 
-function distanceInMeters(lat1, lon1, lat2, lon2) {
+// function distanceInMeters(lat1, lon1, lat2, lon2) {
 
-  const R = 6371000;
+//  const R = 6371000;
 
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+//  const dLat = (lat2 - lat1) * Math.PI / 180;
+//  const dLon = (lon2 - lon1) * Math.PI / 180;
 
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+//  const a =
+//    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+//    Math.cos(lat1 * Math.PI / 180) *
+//    Math.cos(lat2 * Math.PI / 180) *
+//    Math.sin(dLon / 2) * Math.sin(dLon / 2);
 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+//  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-  return R * c;
-}
+//  return R * c;
+// }
 
 // ================== COLORS ==================
 
@@ -217,7 +257,7 @@ function drawMarker(lat, lng, category, comment) {
   .addTo(markerLayer);
 }
 
-// ================== MAP CLICK ==================
+// ================== SAVE ==================
 
 document.getElementById("saveBtn").onclick = function() {
 
@@ -258,16 +298,18 @@ document.getElementById("saveBtn").onclick = function() {
 };
 
 
-// ================== SAVE BUTTON ==================
+// ================== MAP CLICK ==================
 map.on('click', function(e) {
 
-  const lat = e.latlng.lat;
-  const lng = e.latlng.lng;
+  if (!cityBoundary) return;
 
-  const dist = distanceInMeters(centerLat, centerLng, lat, lng);
+  const point = turf.point([e.latlng.lng, e.latlng.lat]);
+  const polygon = cityBoundary.toGeoJSON();
 
-  if (dist > maxDistance) {
-    alert("Marker nur im Umkreis von 5 km um Baesweiler erlaubt.");
+  const inside = turf.booleanPointInPolygon(point, polygon);
+
+  if (!inside) {
+    alert("Marker nur innerhalb der Stadtgrenze Baesweiler erlaubt.");
     return;
   }
 
@@ -277,7 +319,7 @@ map.on('click', function(e) {
     map.removeLayer(tempMarker);
   }
 
-  tempMarker = L.marker([lat, lng]).addTo(map);
+  tempMarker = L.marker(e.latlng).addTo(map);
 
   document.getElementById("saveBtn").disabled = false;
   document.getElementById("hint").innerText =
