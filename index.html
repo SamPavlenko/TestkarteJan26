@@ -109,7 +109,9 @@ map.createPane("maskPane");
 map.getPane("maskPane").style.zIndex = 200;
 map.getPane("maskPane").style.pointerEvents = "none";
   
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: "© OpenStreetMap"
+}).addTo(map);
 
 const markerLayer = L.layerGroup().addTo(map);
 
@@ -124,7 +126,9 @@ fetch("baesweiler.geojson")
   .then(res => res.json())
   .then(data => {
 
-    cityBoundary = L.geoJSON(data, {
+    cityGeoJSON = data;
+
+    const cityLayer = L.geoJSON(data, {
       style: {
         color: "black",
         weight: 2,
@@ -132,7 +136,7 @@ fetch("baesweiler.geojson")
       }
     }).addTo(map);
 
-    map.fitBounds(cityBoundary.getBounds());
+    map.fitBounds(cityLayer.getBounds());
 
     createMask(data);
   });
@@ -140,61 +144,35 @@ fetch("baesweiler.geojson")
 
 // World mask with hole
 
-function createMask(geojsonData) {
+function createMask(cityData) {
 
-  const outer = [
-    [-90, -180],
-    [-90, 180],
-    [90, 180],
-    [90, -180]
-  ];
+  const world = turf.polygon([[
+    [-180,-90],
+    [180,-90],
+    [180,90],
+    [-180,90],
+    [-180,-90]
+  ]]);
 
-  const maskRings = [outer];
+  let cityUnion = cityData.features[0];
 
-  geojsonData.features.forEach(feature => {
-
-    const geom = feature.geometry;
-
-    if (geom.type === "Polygon") {
-
-      geom.coordinates.forEach(ring => {
-
-        const latLngRing = ring.map(coord => [
-          coord[1],  // lat
-          coord[0]   // lng
-        ]);
-
-        maskRings.push(latLngRing);
-      });
+  if (cityData.features.length > 1) {
+    for (let i = 1; i < cityData.features.length; i++) {
+      cityUnion = turf.union(cityUnion, cityData.features[i]);
     }
-
-    if (geom.type === "MultiPolygon") {
-
-      geom.coordinates.forEach(polygon => {
-
-        polygon.forEach(ring => {
-
-          const latLngRing = ring.map(coord => [
-            coord[1],
-            coord[0]
-          ]);
-
-          maskRings.push(latLngRing);
-        });
-
-      });
-    }
-
-  });
-
-  L.polygon(maskRings, {
-  pane: "maskPane",
-  fillColor: "black",
-  fillOpacity: 0.35,
-  stroke: false
-}).addTo(map);
   }
-  
+
+  const difference = turf.difference(world, cityUnion);
+
+  L.geoJSON(difference, {
+    style: {
+      fillColor: "black",
+      fillOpacity: 0.35,
+      stroke: false
+    },
+    interactive: false
+  }).addTo(map);
+}
 
 // ================== COLORS ==================
 
@@ -214,20 +192,24 @@ function getColor(category) {
 
 function drawMarker(lat, lng, category, comment) {
 
-  const popupText =
-    "<b>Kategorie:</b> " + category +
-    "<br><b>Info:</b> " + comment;
-
-  const color = getColor(category);
+  const colors = {
+    Hitze: "orange",
+    Starkregen: "blue",
+    Hochwasser: "brown",
+    Versiegelung: "gray",
+    Starkwind: "yellow",
+    Weiteres: "green"
+  };
 
   L.circleMarker([lat, lng], {
     radius: 8,
-    fillColor: color,
+    fillColor: colors[category] || "black",
     color: "#000",
     weight: 1,
     fillOpacity: 0.8
   })
-  .bindPopup(popupText)
+  .bindPopup("<b>Kategorie:</b> " + category +
+             "<br><b>Info:</b> " + comment)
   .addTo(markerLayer);
 }
 
@@ -236,9 +218,6 @@ function drawMarker(lat, lng, category, comment) {
 document.getElementById("saveBtn").onclick = function() {
 
   if (!selectedLatLng) return;
-
-  const lat = selectedLatLng.lat;
-  const lng = selectedLatLng.lng;
 
   const category = document.getElementById("category").value;
   const comment = document.getElementById("comment").value;
@@ -249,49 +228,49 @@ document.getElementById("saveBtn").onclick = function() {
   }
 
   db.collection("marker").add({
-    lat: lat,
-    lng: lng,
+    lat: selectedLatLng.lat,
+    lng: selectedLatLng.lng,
     category: category,
     comment: comment,
     timestamp: new Date(),
     approved: false
   });
 
-  if (tempMarker) {
-    map.removeLayer(tempMarker);
-  }
+  drawMarker(selectedLatLng.lat, selectedLatLng.lng, category, comment);
 
-  drawMarker(lat, lng, category, comment);
-
-  selectedLatLng = null;
+  map.removeLayer(tempMarker);
   tempMarker = null;
+  selectedLatLng = null;
 
   document.getElementById("comment").value = "";
   document.getElementById("saveBtn").disabled = true;
-  document.getElementById("hint").innerText = "Klicke auf die Karte für neuen Punkt.";
+  document.getElementById("hint").innerText =
+    "Klicke auf die Karte für neuen Punkt.";
 };
-
 
 // ================== MAP CLICK ==================
 map.on('click', function(e) {
 
-  if (!cityBoundary) return;
+  if (!cityGeoJSON) return;
 
   const point = turf.point([e.latlng.lng, e.latlng.lat]);
-  const polygon = cityBoundary.toGeoJSON();
 
-  const inside = turf.booleanPointInPolygon(point, polygon);
+  let inside = false;
+
+  cityGeoJSON.features.forEach(feature => {
+    if (turf.booleanPointInPolygon(point, feature)) {
+      inside = true;
+    }
+  });
 
   if (!inside) {
-    alert("Marker nur innerhalb der Stadtgrenze Baesweiler erlaubt.");
+    alert("Marker nur innerhalb der Stadtgrenze erlaubt.");
     return;
   }
 
   selectedLatLng = e.latlng;
 
-  if (tempMarker) {
-    map.removeLayer(tempMarker);
-  }
+  if (tempMarker) map.removeLayer(tempMarker);
 
   tempMarker = L.marker(e.latlng).addTo(map);
 
@@ -303,9 +282,13 @@ map.on('click', function(e) {
 
 // ================== LOAD EXISTING ==================
 
-db.collection("marker").get().then(snapshot => { snapshot.forEach(doc => { const data = doc.data(); drawMarker( data.lat, data.lng, data.category, data.comment ); }); });
+db.collection("marker").get().then(snapshot => {
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    drawMarker(data.lat, data.lng, data.category, data.comment);
+  });
+});
 
 </script>
-
 </body>
 </html>
