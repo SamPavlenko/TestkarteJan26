@@ -30,39 +30,52 @@ const db = firebase.firestore();
 
 const list = document.getElementById("list");
 
+loadData();
+
+  function loadData() {
+
+  list.innerHTML = "";
+  
 db.collection("marker")
-  .where("approved", "==", false)
-  .get()
-  .then(snapshot => {
+    .where("approved", "==", false)
+    .get()
+    .then(snapshot => {
 
-    snapshot.forEach(doc => {
+      if (snapshot.empty) {
+        list.innerHTML = "<p>Keine neuen Meldungen.</p>";
+        return;
+      }
 
-      const d = doc.data();
-      const li = document.createElement("li");
+      snapshot.forEach(doc => {
 
-      li.innerHTML = `
-        <b>${d.category}</b><br>
-        ${d.comment}<br>
-        <button onclick="approve('${doc.id}')">Freigeben</button>
-      `;
+        const d = doc.data();
+        const li = document.createElement("li");
 
-      list.appendChild(li);
-    });
+        li.innerHTML = `
+          <b>${d.category}</b><br>
+          ${d.comment}<br><br>
+          <button onclick="approve('${doc.id}')">
+            Freigeben
+          </button>
+          <hr>
+        `;
+
+        list.appendChild(li);
+      });
   });
+
+    }
 
 function approve(id) {
 
   db.collection("marker").doc(id).update({
     approved: true
+  })
+  .then(() => {
+    alert("Freigegeben.");
+    loadData();
   });
 
-  db.collection("marker").doc(id).set({
-  approved: true
-}, { merge: true });
-
-
-  alert("Freigegeben – Marker ist jetzt öffentlich.");
-  location.reload();
 }
 
 </script>
